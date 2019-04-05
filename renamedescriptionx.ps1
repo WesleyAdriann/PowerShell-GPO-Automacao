@@ -1,19 +1,34 @@
-[void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
+function ConnectBD() {
+    [void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
 
+    $server = '10.41.171.207'
+    $user = 'admin'
+    $password = 'admin'
+    $database = 'db_renamepc'
+    $connectString = "server=$server;user id=$user;password=$password;database=$database"
 
-$server = '10.41.171.207'
-$user = 'admin'
-$password = 'admin'
-$database = 'db_renamepc'
-$connectString = "server=$server;user id=$user;password=$password;database=$database"
+    $bdConnect = New-Object MySql.Data.MySqlClient.MySqlConnection($connectString)
+    try {
+        $bdConnect.Open()
+    }
+    catch {
+        write-warning ("Não foi possivel conectar ao $database no servidor $server.")
+        break
+    } 
+    write-Host ("Conectado ao $database no servidor $server")
 
-$oConnection = New-Object MySql.Data.MySqlClient.MySqlConnection($connectString)
-try
-{
-    $oConnection.Open()
+    
+    return $bdConnect
 }
-catch
-{
-    write-warning ("Could not open a connection to Database $database on Host $server. Error: "+$Error[0].ToString())
+
+function CloseBD($bdConnect) {
+    $bdConnect.Close()
+    write-Host("Conexao fechada")
 }
 
+
+$bdConnect = ConnectBD
+
+
+
+CloseBD $bdConnect
