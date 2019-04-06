@@ -1,4 +1,4 @@
-[void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
+[void][system.reflection.Assembly]::LoadFrom("/MySql.Data.dll")
 
 function ConnectBD() {
 
