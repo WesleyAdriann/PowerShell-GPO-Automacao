@@ -1,5 +1,4 @@
 [void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
-# [void][system.reflection.Assembly]::LoadFrom('C:\System.Data.dll')
 
 function ConnectBD() {
 
@@ -36,7 +35,7 @@ function SelectQuery($bdConnect, [string]$query) {
     $bdDataReader = $bdCommand.ExecuteReader()
 
     while($bdDataReader.Read()) {
-        write-Host ("Status: " +$bdDataReader[0]+ " | Descricao: " +$bdDataReader[1])
+        write-Host ("Status:    " +$bdDataReader[0]+ "  |   Descricao:  " +$bdDataReader[1])
     }
 }
 
@@ -50,9 +49,10 @@ function InsertQuery($bdConnect, [string]$query) {
 }
 
 $bdConnect = ConnectBD
-$query = "insert into tb_response values ('ok', 'itautec')"
 
-InsertQuery $bdConnect $query
+# $query = "insert into tb_response values ('ok', 'itautec')"
+
+# InsertQuery $bdConnect $query
 
 # $queryS = "select * from tb_response"
 
