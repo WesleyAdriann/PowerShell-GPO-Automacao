@@ -1,5 +1,5 @@
 [void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
-[void][void][system.reflection.Assembly]::LoadFrom('C:\System.Data.dll')
+# [void][system.reflection.Assembly]::LoadFrom('C:\System.Data.dll')
 
 function ConnectBD() {
 
@@ -34,21 +34,28 @@ function CloseBD($bdConnect) {
 function SelectQuery($bdConnect, [string]$query) {
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
+
     while($bdDataReader.Read()) {
-        
         write-Host ("Status: " +$bdDataReader[0]+ " | Descricao: " +$bdDataReader[1])
     }
 }
 
 function InsertQuery($bdConnect, [string]$query) {
-    
-
+    $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
+    try {
+        $bdCommand.ExecuteNonQuery()
+    } catch {
+        write-warning("Nao foi possivel adicionar")
+    }
 }
 
 $bdConnect = ConnectBD
-# $query = "insert into tb_response values (`ok`, `itautec`)"
-$query = "select * from tb_response"
-# InsertQuery $bdConnect $query
-SelectQuery $bdConnect $query
+$query = "insert into tb_response values ('ok', 'itautec')"
+
+InsertQuery $bdConnect $query
+
+# $queryS = "select * from tb_response"
+
+# SelectQuery $bdConnect $queryS
 
 CloseBD $bdConnect
