@@ -1,25 +1,28 @@
-function ConnectBD() {
-    [void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
+[void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
+[void][void][system.reflection.Assembly]::LoadFrom('C:\System.Data.dll')
 
-    $server = '10.41.171.207'
+function ConnectBD() {
+
+    $server = '192.168.0.104'
     $user = 'admin'
     $password = 'admin'
     $database = 'db_renamepc'
     $connectString = "server=$server;user id=$user;password=$password;database=$database"
 
-    
-
     $bdConnect = New-Object MySql.Data.MySqlClient.MySqlConnection($connectString)
+    $bdStatus = $true
     try {
         $bdConnect.Open()
     }
     catch {
-        write-warning ("Não foi possivel conectar ao $database no servidor $server.")
-        break
+        $bdStatus = $false
     } 
-    write-Host ("Conectado ao $database no servidor $server")
 
-    
+    if($bdStatus) {
+        write-Host ("Conectado ao $database no servidor $server")
+    } else {
+        write-warning ("Não foi possivel conectar ao $database no servidor $server.")
+    }  
     return $bdConnect
 }
 
@@ -29,54 +32,23 @@ function CloseBD($bdConnect) {
 }
 
 function SelectQuery($bdConnect, [string]$query) {
-    $bdCommand = $bdConnect.CreateCommand()
-    $bdCommand.CommandText = $query
-
-    $dataAdapter = MySql.Data.MySqlClient.MySqlDataAdapter($bdCommand)
-    
-    $dataSet = New-Object System.Data.DataSet
-
-
-    
-    $bdCommand.ExecuteScalar()
-
-    # $results = $bdCommand.ExecuteReader()
-
-    # $bdCommand.Dispose()
-    # while ($results.Read()) {
-    #     for($i = 0; $i -lt $reader.FieldCount; $i++) {
-    #         write-Host $reader.GetValue($i).ToString()
-    #     }
-    # }
+    $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
+    $bdDataReader = $bdCommand.ExecuteReader()
+    while($bdDataReader.Read()) {
+        
+        write-Host ("Status: " +$bdDataReader[0]+ " | Descricao: " +$bdDataReader[1])
+    }
 }
 
 function InsertQuery($bdConnect, [string]$query) {
-    $bdCommand = $bdCommand.CreateCommand()
-    $bdCommand.CommandText = $query
-
-    $RowsInserted = $bdCommand.ExecuteNonQuery()
-
-    $bdCommand.Dispose()
-
-    if($RowsInserted) {
-        write-Host("Inserido $RowInserted")
-    } else {
-        write-Host("Erro $RowInserted")
-    }
-
-}
-
-function MySqlClient() {
-    [void][system.reflection.Assembly]::LoadFrom('C:\MySql.Data.dll')
     
-    $Client = New-Object MySql.Data.MySqlClient
-    return 
+
 }
 
 $bdConnect = ConnectBD
-$query = "insert into tb_response values (`ok`, `itautec`)"
-
-InsertQuery $bdConnect $query
-# SelectQuery $bdConnect $query
+# $query = "insert into tb_response values (`ok`, `itautec`)"
+$query = "select * from tb_response"
+# InsertQuery $bdConnect $query
+SelectQuery $bdConnect $query
 
 CloseBD $bdConnect
