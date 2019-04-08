@@ -2,11 +2,12 @@
 
 function ConnectBD() {
 
-    $server = '192.168.0.104'
+    $server = '10.41.171.207'
     $user = 'admin'
     $password = 'admin'
     $database = 'db_renamepc'
-    $connectString = "server=$server;user id=$user;password=$password;database=$database"
+    $port = '3306'
+    $connectString = "server=$server;port=$port;user id=$user;password=$password;database=$database"
 
     $bdConnect = New-Object MySql.Data.MySqlClient.MySqlConnection($connectString)
     $bdStatus = $true
