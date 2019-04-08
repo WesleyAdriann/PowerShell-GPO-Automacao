@@ -49,14 +49,42 @@ function InsertQuery($bdConnect, [string]$query) {
     }
 }
 
+function ReadCsv($bdConnect) {
+    $pathCsv = "./NomePcs.csv"
+
+    $nomePc
+    $patPc 
+    $modelo 
+    $setor 
+    $sala 
+    Import-Csv $pathCsv |`
+        ForEach-Object {
+            $nomePc = $_."Nome"
+            $patPc = $_."Patrimonio"
+            $modelo = $_."Modelo"
+            $setor = $_."Setor"
+            $sala = $_."Sala"
+            write-Host("$nomePc  $patPc  $modelo  $setor  $sala")
+            $query = "insert into tb_pcs values ('$nomePc', '$patPc', '$modelo','$setor','$sala');"
+            InsertQuery $bdConnect $query
+        }
+}
+
 $bdConnect = ConnectBD
 
-# $query = "insert into tb_response values ('ok', 'itautec')"
+# $nomePc = "ITN-300002703"
+# $patPc = "30001288"
+# $modelo = "ELITEDESK 800 G1 MINI"
+# $setor = "SECAO DE PATRIMONIO (DEPOSITO DE MOVEIS)"
+# $sala = "G2"
+# $query = "insert into tb_pcs values ('$nomePc', '$patPc', '$modelo','$setor','$sala');"
 
 # InsertQuery $bdConnect $query
 
 # $queryS = "select * from tb_response"
 
 # SelectQuery $bdConnect $queryS
+
+ReadCsv $bdConnect
 
 CloseBD $bdConnect
