@@ -1,4 +1,6 @@
 [void][system.reflection.Assembly]::LoadFrom("/MySql.Data.dll")
+$ComputerSystem = Get-WmiObject -class win32_ComputerSystem
+$NamePC = $ComputerSystem.PSComputerName
 
 function ConnectBD() {
 
@@ -85,6 +87,8 @@ $bdConnect = ConnectBD
 
 # SelectQuery $bdConnect $queryS
 
-ReadCsv $bdConnect
+# ReadCsv $bdConnect
+
+write-host "Nome-PC:" $NamePC -ForegroundColor gray
 
 CloseBD $bdConnect
