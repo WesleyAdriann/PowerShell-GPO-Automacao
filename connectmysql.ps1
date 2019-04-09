@@ -59,6 +59,6 @@ $bdConnect = ConnectBD
 
 $query = "select * from tb_pcs"
 
-SelectQuery $bdConnect $query 5
+SelectQuery $bdConnect $query 4
 
 CloseBD $bdConnect

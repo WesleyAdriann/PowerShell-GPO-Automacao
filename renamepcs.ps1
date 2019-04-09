@@ -33,12 +33,16 @@ function CloseBD($bdConnect) {
     write-Host("Conexao fechada")
 }
 
-function SelectQuery($bdConnect, [string]$query) {
+function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
     
     while($bdDataReader.Read()) {
-        write-Host $bdDataReader[0] - $bdDataReader[1] - $bdDataReader[2] - $bdDataReader[3] - $bdDataReader[4]
+        for($i = 0; $i -le $numColumns; $i++) {
+            write-Host "| " $bdDataReader[$i]
+        }
+        write-Host "+-------------------"
+        # write-Host $bdDataReader[0] - $bdDataReader[1] - $bdDataReader[2] - $bdDataReader[3] - $bdDataReader[4]
     }
     
     return $bdDataReader[1]
