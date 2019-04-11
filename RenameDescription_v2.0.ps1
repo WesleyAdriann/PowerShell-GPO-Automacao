@@ -25,7 +25,7 @@ function ConnectBD() {
     } 
 
     if($bdStatus) {
-        write-Host ("Conectado ao $database no servidor $server")
+        write-Host ("Conectado ao $database no servidor $server") -foreground green
     } else {
         write-warning ("Não foi possivel conectar ao $database no servidor $server.")
     }  
@@ -34,21 +34,19 @@ function ConnectBD() {
 
 function CloseBD($bdConnect) {
     $bdConnect.Close()
-    write-Host("Conexao fechada")
+    write-Host("Conexao fechada") -foreground green      
 }
 
 function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {   
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
-    
+
     while($bdDataReader.Read()) {
         for($i = 0; $i -le $numColumns; $i++) {
             write-Host "| " $bdDataReader[$i]
-        }
-        write-Host "+-------------------"
-        # write-Host $bdDataReader[0] - $bdDataReader[1] - $bdDataReader[2] - $bdDataReader[3] - $bdDataReader[4]
+        }        
     }
-    
+
     return ,$bdDataReader;
 }
 
@@ -60,39 +58,41 @@ function InsertQuery($bdConnect, [string]$query) {
         write-warning("Nao foi possivel adicionar")
     }
 }
-function InsertResponse($bdConnect) {
-   
+function InsertResponse($message) {
+    $queryInsert = "INSERT INTO tb_response VALUES ('$message', );"
+    InsertQuery $bdConnect $queryInsert 
 }
 function getDescriptionBD(){
     $nomePC = getNomePC
     $querySelect = "SELECT modelo, setor, sala FROM tb_pcs WHERE nome='$nomePC';"
     $colsVal = SelectQuery $bdConnect $querySelect 3 #Array que contém os valores do modelo, setor e sala
-    write-host "values from ExplicitArray are $($colsVal[0]) and $($colsVal[1])  $($colsVal[2])"
-    RenameDescriptionPC $colsVal 
+    return "$($colsVal[0]) - $($colsVal[1]) - $($colsVal[2])"
 }
-function RenameDescriptionPC($colsVal){
+function getDescriptionPC(){
+    $Reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine',$computer)
+    $RegKey= $Reg.OpenSubKey("SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters")
+    return $RegKey.GetValue("srvcomment")     
+}
+
+function RenameDescriptionPC(){
     #Nome atual
     $nomePC = getNomePC
 
     #Descrição atual
-    $Reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine',$computer)
-    $RegKey= $Reg.OpenSubKey("SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters")
-    $description = $RegKey.GetValue("srvcomment")
+    $description = getDescriptionPC
 
     #Nova Descrição
-    $newDescription = "$($colsVal[0]) - $($colsVal[1]) - $($colsVal[2])"
-    
-    write-Host "Nome do PC:" $nomePC
-    write-Host "Descrição do PC:" $description
-    
+    $newDescription = getDescriptionBD        
+<#
     try{
-        #net config server /srvcomment:$newDescription 
+        net config server /srvcomment:$newDescription 
     }catch{
         $ErrorMessage = $_.Exception.Message
     }
-    
-    write-host "Descrição nova: " $newDescription.toString() -ForegroundColor Green  
-
+#>    
+    write-Host "Nome do PC:" $nomePC
+    write-Host "Descrição do PC:" $description -foreground DarkCyan
+    write-host "Descrição nova: " $newDescription -foreground Cyan
 }
 
 
@@ -103,7 +103,7 @@ $querySelect = "select * from tb_pcs"
 #InsertQuery $bdConnect $queryInsert 
 #ReadCsv $bdConnect
 
-getDescriptionBD
+RenameDescriptionPC
 #SelectQuery $bdConnect $querySelect 4
 
 CloseBD $bdConnect
