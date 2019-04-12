@@ -119,7 +119,8 @@ function RenameDescriptionPC(){
         write-host "Ocorreu um erro ao renomear"
     }    
     write-Host "Nome do PC:" $nomePC
-    write-Host "Descrição do PC:" $description -foreground DarkCyan
+    write-Host "Descrição do PC:" $description -foreground Magenta
+    write-Host ""
     write-host "Descrição nova: " $newDescription -foreground Cyan
     sendResponse $message
     #insertOnFunc $message
