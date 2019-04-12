@@ -37,8 +37,8 @@ function CloseBD($bdConnect) {
     write-Host("Conexao fechada") -foreground green      
 }
 
-function SelectQuery([string]$query, [int]$numColumns) {   
-    $bdConnect = ConnectBD
+function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {   
+    
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
 
@@ -47,33 +47,35 @@ function SelectQuery([string]$query, [int]$numColumns) {
             write-Host "| " $bdDataReader[$i]
         }        
     }
-    CloseBD $bdConnect
+    
     return ,$bdDataReader
 }
 
-function InsertQuery([string]$query) {
-    $bdConnect = ConnectBD
+function InsertQuery($bdConnect, [string]$query) {
+    
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     try {
         $bdCommand.ExecuteNonQuery()        
     } catch {
         write-warning("Nao foi possivel adicionar")
     }
-    CloseBD $bdConnect
+    
 }
 function insertOnFunc($message){
 #   $queryInsert = "INSERT INTO tb_pcs (nome, descRenomeada) VALUES ('testeInterno4', '$message');"
     $queryInsert = "INSERT INTO tb_response (nome, descricao) VALUES ('HP-30003648','$message');"
     write-host 'inserindo linha teste'
-    InsertQuery $bdConnect $queryInsert 
+    InsertQuery $queryInsert 
 }
 function sendResponse($message) {        
     $nomePC = getNomePC    
     $description = getDescriptionPC
     $queryUpdate = "UPDATE tb_response SET descricao='$description', descRenomeada='$message' WHERE nome='$nomePC';"         
     write-host 'atualizando linha...'
+    $bdConnect = ConnectBD
     InsertQuery $bdConnect $queryUpdate 
     CloseBD $bdConnect
+    
 }
 
 function getDescriptionBD(){
@@ -89,6 +91,7 @@ function getDescriptionPC(){
 }
 
 function RenameDescriptionPC(){
+    
     #Nome atual
     $nomePC = getNomePC
 
@@ -96,7 +99,10 @@ function RenameDescriptionPC(){
     $description = getDescriptionPC
 
     #Nova Descrição
-    $newDescription = "semConsultarBD"#getDescriptionBD        
+    write-Host "Pega o nome no BD"
+    $bdConnect = ConnectBD
+    $newDescription = getDescriptionBD
+    CloseBD $bdConnect        
     $message
     $remoeado = $true
     try{
@@ -125,17 +131,4 @@ function RenameDescriptionPC(){
 #InsertQuery $bdConnect $queryInsert 
 #ReadCsv $bdConnect
 
-# RenameDescriptionPC
-$description = 'ok'
-$message = 'teste'
-$nomePC = 'HP-30003641'
-$query = "select * from tb_pcs where nome='$nomePC'"
-$x = SelectQuery $query 3
-
-$query = "UPDATE tb_response SET descricao='$description', descRenomeada='$message' WHERE nome='$nomePC';"
-InsertQuery $query
-
-#SelectQuery $bdConnect $querySelect 4
-
-
-
+RenameDescriptionPC
