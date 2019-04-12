@@ -32,6 +32,8 @@ function ConnectBD() {
     return $bdConnect
 }
 
+$bdConnect = ConnectBD
+
 function CloseBD($bdConnect) {
     $bdConnect.Close()
     write-Host("Conexao fechada") -foreground green      
@@ -53,15 +55,26 @@ function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {
 function InsertQuery($bdConnect, [string]$query) {
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     try {
-        $bdCommand.ExecuteNonQuery()
+        $bdCommand.ExecuteNonQuery()        
     } catch {
         write-warning("Nao foi possivel adicionar")
     }
 }
-function InsertResponse($message) {
-    $queryInsert = "INSERT INTO tb_response VALUES ('$message', );"
+function insertOnFunc($message){
+#   $queryInsert = "INSERT INTO tb_pcs (nome, descRenomeada) VALUES ('testeInterno4', '$message');"
+    $queryInsert = "INSERT INTO tb_response (nome, descricao) VALUES ('HP-30003648','$message');"
+    write-host 'inserindo linha teste'
     InsertQuery $bdConnect $queryInsert 
 }
+function sendResponse($message) {        
+    $nomePC = getNomePC    
+    $description = getDescriptionPC
+    $queryUpdate = "UPDATE tb_response SET descricao='$description', descRenomeada='$message' WHERE nome='$nomePC';"         
+    write-host 'atualizando linha...'
+    InsertQuery $bdConnect $queryUpdate 
+    CloseBD $bdConnect
+}
+
 function getDescriptionBD(){
     $nomePC = getNomePC
     $querySelect = "SELECT modelo, setor, sala FROM tb_pcs WHERE nome='$nomePC';"
@@ -82,28 +95,36 @@ function RenameDescriptionPC(){
     $description = getDescriptionPC
 
     #Nova Descrição
-    $newDescription = getDescriptionBD        
-<#
+    $newDescription = "semConsultarBD"#getDescriptionBD        
+    $message
+    $remoeado = $true
     try{
-        net config server /srvcomment:$newDescription 
+        net config server /srvcomment:$newDescription                 
     }catch{
-        $ErrorMessage = $_.Exception.Message
+        $message = $_.Exception.Message
+        $renomeado = $false
     }
-#>    
+
+    if($remoeado){
+        write-host "PC renomeado com sucesso!"
+        $message = "Ok"
+    }else{
+        write-host "Ocorreu um erro ao renomear"
+    }    
     write-Host "Nome do PC:" $nomePC
     write-Host "Descrição do PC:" $description -foreground DarkCyan
     write-host "Descrição nova: " $newDescription -foreground Cyan
+    sendResponse $message
+    #insertOnFunc $message
 }
 
 
-$bdConnect = ConnectBD
-
-$querySelect = "select * from tb_pcs"
-#$queryInsert = "INSERT INTO tb_pcs (nome, pat, modelo, setor, sala) VALUES ('teste2Nome', 'teste2pat', 'teste2modelo', 'teste2setor', 'teste2sala');"
+#$querySelect = "select * from tb_pcs"
+#$queryInsert = "INSERT INTO tb_pcs (nome) VALUES ('nome12/04');"
 #InsertQuery $bdConnect $queryInsert 
 #ReadCsv $bdConnect
 
 RenameDescriptionPC
 #SelectQuery $bdConnect $querySelect 4
 
-CloseBD $bdConnect
+
