@@ -34,7 +34,7 @@ function CloseBD($bdConnect) {
 function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
-    
+    write-Host "+-------------------"
     while($bdDataReader.Read()) {
         for($i = 0; $i -le $numColumns; $i++) {
             write-Host "| " $bdDataReader[$i]

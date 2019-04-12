@@ -32,14 +32,13 @@ function ConnectBD() {
     return $bdConnect
 }
 
-$bdConnect = ConnectBD
-
 function CloseBD($bdConnect) {
     $bdConnect.Close()
     write-Host("Conexao fechada") -foreground green      
 }
 
-function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {   
+function SelectQuery([string]$query, [int]$numColumns) {   
+    $bdConnect = ConnectBD
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
 
@@ -48,17 +47,19 @@ function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {
             write-Host "| " $bdDataReader[$i]
         }        
     }
-
-    return ,$bdDataReader;
+    CloseBD $bdConnect
+    return ,$bdDataReader
 }
 
-function InsertQuery($bdConnect, [string]$query) {
+function InsertQuery([string]$query) {
+    $bdConnect = ConnectBD
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     try {
         $bdCommand.ExecuteNonQuery()        
     } catch {
         write-warning("Nao foi possivel adicionar")
     }
+    CloseBD $bdConnect
 }
 function insertOnFunc($message){
 #   $queryInsert = "INSERT INTO tb_pcs (nome, descRenomeada) VALUES ('testeInterno4', '$message');"
@@ -124,7 +125,17 @@ function RenameDescriptionPC(){
 #InsertQuery $bdConnect $queryInsert 
 #ReadCsv $bdConnect
 
-RenameDescriptionPC
+# RenameDescriptionPC
+$description = 'ok'
+$message = 'teste'
+$nomePC = 'HP-30003641'
+$query = "select * from tb_pcs where nome='$nomePC'"
+$x = SelectQuery $query 3
+
+$query = "UPDATE tb_response SET descricao='$description', descRenomeada='$message' WHERE nome='$nomePC';"
+InsertQuery $query
+
 #SelectQuery $bdConnect $querySelect 4
+
 
 
