@@ -60,12 +60,6 @@ function InsertQuery($bdConnect, [string]$query) {
     }    
 }
 
-function insertOnFunc($message){
-#   $queryInsert = "INSERT INTO tb_pcs (nome, descRenomeada) VALUES ('testeInterno4', '$message');"
-    $queryInsert = "INSERT INTO tb_response (nome, descricao) VALUES ('HP-30003648','$message');"
-    write-host 'inserindo linha teste'
-    InsertQuery $queryInsert 
-}
 function sendResponse($message) {        
     #$nomePC = "pc-desconhecido"
     $nomePC = getNomePC  
@@ -141,6 +135,12 @@ function RenameDescriptionPC(){
     sendResponse $message
     #insertOnFunc $message
 }
+function gerarLog(){      
+    $dataHora = Get-Date -Format g  
+    $mensagem="Script executado em " +$dataHora    
+	$mensagem >> log_gpoRenameDescription.txt
+}
+
 
 
 #$querySelect = "select * from tb_pcs"
@@ -149,3 +149,4 @@ function RenameDescriptionPC(){
 #ReadCsv $bdConnect
 
 RenameDescriptionPC
+gerarLog
