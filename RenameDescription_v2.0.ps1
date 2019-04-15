@@ -46,8 +46,7 @@ function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {
         for($i = 0; $i -le $numColumns; $i++) {
             write-Host "| " $bdDataReader[$i]
         }        
-    }
-    
+    }    
     return ,$bdDataReader
 }
 
@@ -58,9 +57,9 @@ function InsertQuery($bdConnect, [string]$query) {
         $bdCommand.ExecuteNonQuery()        
     } catch {
         write-warning("Nao foi possivel adicionar")
-    }
-    
+    }    
 }
+
 function insertOnFunc($message){
 #   $queryInsert = "INSERT INTO tb_pcs (nome, descRenomeada) VALUES ('testeInterno4', '$message');"
     $queryInsert = "INSERT INTO tb_response (nome, descricao) VALUES ('HP-30003648','$message');"
@@ -68,14 +67,30 @@ function insertOnFunc($message){
     InsertQuery $queryInsert 
 }
 function sendResponse($message) {        
-    $nomePC = getNomePC    
+    #$nomePC = "pc-desconhecido"
+    $nomePC = getNomePC  
     $description = getDescriptionPC
-    $queryUpdate = "UPDATE tb_response SET descricao='$description', descRenomeada='$message' WHERE nome='$nomePC';"         
-    write-host 'atualizando linha...'
+
     $bdConnect = ConnectBD
-    InsertQuery $bdConnect $queryUpdate 
-    CloseBD $bdConnect
-    
+    $querySelect = "SELECT nome FROM tb_response WHERE nome='$nomePC';"
+    $colNome = SelectQuery $bdConnect $querySelect 1 #Array que contém os valores do modelo, setor e sala
+    write-host $colNome[0]
+
+    if($colNome[0] -ne $null){
+        write-host "coluna não está vazia, preciso realizar o UPDATE"
+        $queryUpdate = "UPDATE tb_response SET descricao='$description', descRenomeada='$message' WHERE nome='$nomePC';"         
+        write-host 'atualizando linha...'
+        $bdConnect = ConnectBD
+        InsertQuery $bdConnect $queryUpdate 
+        CloseBD $bdConnect    
+    }else{
+        write-host "coluna está vazia, preciso realizar o INSERT INTO"
+        $queryInsert = "INSERT INTO tb_response (nome, descRenomeada, descricao) VALUES ('$nomePC', '$message', '$description');"         
+        write-host 'inserindo linha...'
+        $bdConnect = ConnectBD
+        InsertQuery $bdConnect $queryInsert 
+        CloseBD $bdConnect    
+    }
 }
 
 function getDescriptionBD(){
