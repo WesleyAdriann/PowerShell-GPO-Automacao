@@ -1,4 +1,10 @@
-[void][system.reflection.Assembly]::LoadFrom("/MySql.Data.dll")
+
+function gerarLog($message, $dataHora){          
+    $mensagem="Script executado em " +$dataHora + "`r`n`r`n"      
+    $mensagem += "Status: "+$message+ "`r`n`r`n __________________________________`r`n`r`n"      
+    
+	$mensagem >> C:\Drivers\Renomeacao_descricao\log_gpoRenameDescription.txt
+}
 
 function getNomePC(){
     $ComputerSystem = Get-WmiObject -class win32_ComputerSystem
@@ -7,7 +13,7 @@ function getNomePC(){
 }
 
 function ConnectBD() {
-
+    
     $server = '10.41.1.173'
     $user = 'admin'
     $password = 'admin'
@@ -38,7 +44,7 @@ function CloseBD($bdConnect) {
 }
 
 function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {   
-    
+   
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     $bdDataReader = $bdCommand.ExecuteReader()
 
@@ -51,7 +57,7 @@ function SelectQuery($bdConnect, [string]$query, [int]$numColumns) {
 }
 
 function InsertQuery($bdConnect, [string]$query) {
-    
+   
     $bdCommand = New-Object MySql.Data.MySqlClient.MySqlCommand($query, $bdConnect)
     try {
         $bdCommand.ExecuteNonQuery()        
@@ -86,6 +92,7 @@ function sendResponse($message) {
         InsertQuery $bdConnect $queryInsert 
         CloseBD $bdConnect    
     }
+    gerarLog $message $dataHora
 }
 
 function getDescriptionBD(){
@@ -102,51 +109,53 @@ function getDescriptionPC(){
 
 function RenameDescriptionPC(){
     
-    #Nome atual
-    $nomePC = getNomePC
-
-    #Descrição atual
-    $description = getDescriptionPC
-
-    #Nova Descrição
-    write-Host "Pega o nome no BD"
-    $bdConnect = ConnectBD
-    $newDescription = getDescriptionBD
-    CloseBD $bdConnect        
     $message
-    $remoeado = $true
     try{
-        net config server /srvcomment:$newDescription                 
-    }catch{
-        $message = $_.Exception.Message
-        $renomeado = $false
-    }
+        #Nome atual
+        $nomePC = getNomePC
 
-    if($remoeado){
+        #Descrição atual
+        $description = getDescriptionPC
+
+        #Nova Descrição
+        write-Host "Pega o nome no BD"
+        $bdConnect = ConnectBD
+        $newDescription = getDescriptionBD
+        CloseBD $bdConnect                
+        
+        #Executa comando para renomear o PC
+        net config server /srvcomment:$newDescription                 
         write-host "PC renomeado com sucesso!"
         $message = "Ok"
-    }else{
+    }catch{
         write-host "Ocorreu um erro ao renomear"
-    }    
+        $message = $_.Exception.Message        
+    }
+ 
     write-Host "Nome do PC:" $nomePC
     write-Host "Descrição do PC:" $description -foreground Magenta
     write-Host ""
     write-host "Descrição nova: " $newDescription -foreground Cyan
-    sendResponse $message
-    #insertOnFunc $message
+    
+    sendResponse $message    
 }
-function gerarLog(){      
-    $dataHora = Get-Date -Format g  
-    $mensagem="Script executado em " +$dataHora    
-	$mensagem >> log_gpoRenameDescription.txt
+function init{
+	if(!(test-path -path C:\Drivers\Renomeacao_descricao)){
+        New-Item -Path C:\Drivers\Renomeacao_descricao -ItemType directory   
+        try{
+            Copy-Item -Path '\\10.41.0.163\Log_Script_Renomeacao\MySql.Data.dll' -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll'                                       
+            write-host "arquivo dll copiado!"
+        }catch{            
+           # Remove-Item -LiteralPath "C:\Drivers\Renomeacao_descricao" -Force -Recurse            
+            $mensagem += "Status: "+$_.Exception.Message
+	        $mensagem >> C:\Drivers\erro_renomeacao.txt
+        }           
+	}
+    write-host "Saindo do init..."     
 }
-
-
-
-#$querySelect = "select * from tb_pcs"
-#$queryInsert = "INSERT INTO tb_pcs (nome) VALUES ('nome12/04');"
-#InsertQuery $bdConnect $queryInsert 
-#ReadCsv $bdConnect
-
+init
+write-host "Fazendo o Load do dll"
+[void][system.reflection.Assembly]::LoadFrom("C:\Drivers\Renomeacao_descricao\MySql.Data.dll")
 RenameDescriptionPC
-gerarLog
+
+
