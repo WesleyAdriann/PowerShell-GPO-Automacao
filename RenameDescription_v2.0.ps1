@@ -1,5 +1,7 @@
+#latest version date: 17/04/19
+$dataHora = Get-Date -Format g
 
-function gerarLog($message, $dataHora){          
+function gerarLog($message){          
     $mensagem="Script executado em " +$dataHora + "`r`n`r`n"      
     $mensagem += "Status: "+$message+ "`r`n`r`n __________________________________`r`n`r`n"      
     
@@ -14,7 +16,7 @@ function getNomePC(){
 
 function ConnectBD() {
     
-    $server = '10.41.1.173'
+    $server = '192.168.15.8'
     $user = 'admin'
     $password = 'admin'
     $database = 'db_renamepc'
@@ -69,8 +71,7 @@ function InsertQuery($bdConnect, [string]$query) {
 function sendResponse($message) {        
     #$nomePC = "pc-desconhecido"
     $nomePC = getNomePC  
-    $description = getDescriptionPC
-    $dataHora = Get-Date -Format g
+    $description = getDescriptionPC    
 
     $bdConnect = ConnectBD
     $querySelect = "SELECT nome FROM tb_response WHERE nome='$nomePC';"
@@ -92,7 +93,7 @@ function sendResponse($message) {
         InsertQuery $bdConnect $queryInsert 
         CloseBD $bdConnect    
     }
-    gerarLog $message $dataHora
+    gerarLog $message 
 }
 
 function getDescriptionBD(){
@@ -140,18 +141,30 @@ function RenameDescriptionPC(){
     sendResponse $message    
 }
 function init{
-	if(!(test-path -path C:\Drivers\Renomeacao_descricao)){
-        New-Item -Path C:\Drivers\Renomeacao_descricao -ItemType directory   
-        try{
-            Copy-Item -Path '\\10.41.0.163\Log_Script_Renomeacao\MySql.Data.dll' -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll'                                       
-            write-host "arquivo dll copiado!"
-        }catch{            
-           # Remove-Item -LiteralPath "C:\Drivers\Renomeacao_descricao" -Force -Recurse            
-            $mensagem += "Status: "+$_.Exception.Message
-	        $mensagem >> C:\Drivers\erro_renomeacao.txt
-        }           
-	}
-    write-host "Saindo do init..."     
+    $pathOrigin_dll = '\\DESKTOP-V6HR2FI\Users\Programador Java\Desktop\Mapeamento - Estágio\PowerShell-GPO-Automacao\pasta_paloma\MySql.Data.dll'
+    try{                        
+        if(!(test-path -path C:\Drivers\Renomeacao_descricao)){
+            write-host "CRIANDO pasta Renomeacao_descricao..."
+            New-Item -Path C:\Drivers\Renomeacao_descricao -ItemType directory   
+            write-host "pasta Renomeacao_descricao CRIADA!"
+            
+            write-host "COPIANDO arquivo dll..."
+            Copy-Item -Path $pathOrigin_DLL -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll' 
+            write-host "arquivo Dll COPIADO!"
+
+        }elseif(!(Test-Path -path C:\Drivers\Renomeacao_descricao\MySql.Data.dll -PathType Leaf)){
+            write-host "COPIANDO arquivo dll..."
+            Copy-Item -Path $pathOrigin_DLL -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll' 
+            write-host "arquivo Dll COPIADO!"
+        }else{
+            write-host "Pasta e dll já existem!"
+        }	            
+#Copy-Item -Path '\\DESKTOP-V6HR2FI\Users\Programador Java\Desktop\Mapeamento - Estágio\PowerShell-GPO-Automacao\pasta_paloma\MySql.Data.dll' -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll'
+    }catch{                    
+        $mensagem += $_.Exception.Message
+        gerarLog $mensagem
+    }           	
+    write-host "Saindo do init......"     
 }
 init
 write-host "Fazendo o Load do dll"
