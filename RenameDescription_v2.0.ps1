@@ -108,9 +108,10 @@ function getDescriptionPC(){
     return $RegKey.GetValue("srvcomment")     
 }
 
-function RenameDescriptionPC(){
-    
-    $message
+function verificarDescricao(){
+    $mensagem = ""
+    $description = ""
+    $newDescription = ""
     try{
         #Nome atual
         $nomePC = getNomePC
@@ -119,24 +120,39 @@ function RenameDescriptionPC(){
         $description = getDescriptionPC
 
         #Nova Descrição
-        write-Host "Pega o nome no BD"
+        write-Host "Obtém o nome no BD"
         $bdConnect = ConnectBD
         $newDescription = getDescriptionBD
         CloseBD $bdConnect                
-        
+    }catch{
+        write-warning "Erro ao verificar descricao"
+        $mensagem += "Erro ao verificar descricao"
+        $mensagem += $_.Exception.Message
+    }
+    
+    if($description -notcontains $newDescription){
+        RenameDescriptionPC $mensagem $description $newDescription
+    }else{
+        write-warning "PC ja foi renomeado!"
+    }
+}
+
+function RenameDescriptionPC($message, $description, $newDescription){    
+    try{                
         #Executa comando para renomear o PC
         net config server /srvcomment:$newDescription                 
         write-host "PC renomeado com sucesso!"
-        $message = "Ok"
+        $message += "Ok"
     }catch{
-        write-host "Ocorreu um erro ao renomear"
-        $message = $_.Exception.Message        
+        write-host "Ocorreu um erro ao renomear!"
+        $message += "Ocorreu um erro ao renomear!"
+        $message += $_.Exception.Message        
     }
  
     write-Host "Nome do PC:" $nomePC
-    write-Host "Descrição do PC:" $description -foreground Magenta
-    write-Host ""
+    write-Host "Descrição do PC: " $description -foreground Magenta    
     write-host "Descrição nova: " $newDescription -foreground Cyan
+    write-Host ""
     
     sendResponse $message    
 }
@@ -166,9 +182,9 @@ function init{
     }           	
     write-host "Saindo do init......"     
 }
+
 init
+
 write-host "Fazendo o Load do dll"
 [void][system.reflection.Assembly]::LoadFrom("C:\Drivers\Renomeacao_descricao\MySql.Data.dll")
-RenameDescriptionPC
-
-
+verificarDescricao
