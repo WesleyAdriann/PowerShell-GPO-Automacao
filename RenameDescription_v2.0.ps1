@@ -1,4 +1,4 @@
-#latest version date: 17/04/19
+#latest version date: 22/04/19
 $dataHora = Get-Date -Format g
 
 function gerarLog($message){          
@@ -16,7 +16,7 @@ function getNomePC(){
 
 function ConnectBD() {
     
-    $server = '192.168.15.8'
+    $server = '10.41.1.173'
     $user = 'admin'
     $password = 'admin'
     $database = 'db_renamepc'
@@ -141,7 +141,7 @@ function RenameDescriptionPC(){
     sendResponse $message    
 }
 function init{
-    $pathOrigin_dll = '\\DESKTOP-V6HR2FI\Users\Programador Java\Desktop\Mapeamento - Estágio\PowerShell-GPO-Automacao\pasta_paloma\MySql.Data.dll'
+    $pathOrigin_dll = '\\paloma\Log_Script_Renomeacao\MySql.Data.dll'
     try{                        
         if(!(test-path -path C:\Drivers\Renomeacao_descricao)){
             write-host "CRIANDO pasta Renomeacao_descricao..."
