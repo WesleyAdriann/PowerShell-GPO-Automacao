@@ -1,11 +1,11 @@
-#latest version date: 23/04/19
+#latest version date: 25/04/19 - v0.1
 $dataHora = Get-Date -Format g
 
 function gerarLog($message){          
     $mensagem="Script executado em " +$dataHora + "`r`n`r`n"      
     $mensagem += "Status: "+$message+ "`r`n`r`n __________________________________`r`n`r`n"      
     
-	$mensagem >> C:\Drivers\Renomeacao_descricao\log_gpoRenameDescription.txt
+	$mensagem >> C:\Drivers\Renomeacao_descricao\log_gpoRenameName.txt
 }
 
 function getNomePC(){
@@ -96,51 +96,43 @@ function sendResponse($message) {
     gerarLog $message 
 }
 
-function getDescriptionBD(){
+function getNomeBD(){
     $nomePC = getNomePC
     $querySelect = "SELECT modelo, setor, sala FROM tb_pcs WHERE nome='$nomePC';"
     $colsVal = SelectQuery $bdConnect $querySelect 3 #Array que contém os valores do modelo, setor e sala
     return "$($colsVal[0]) - $($colsVal[1]) - $($colsVal[2])"
 }
-function getDescriptionPC(){
-    $Reg = [Microsoft.Win32.RegistryKey]::OpenRemoteBaseKey('LocalMachine',$computer)
-    $RegKey= $Reg.OpenSubKey("SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters")
-    return $RegKey.GetValue("srvcomment")     
-}
 
-function verificarDescricao(){
+function verificarNome(){
     $mensagem = ""
-    $description = ""
-    $newDescription = ""
+    $nomePC = ""
+    $newNomePC = ""
     try{
         #Nome atual
         $nomePC = getNomePC
 
-        #Descrição atual
-        $description = getDescriptionPC
-
-        #Nova Descrição
-        write-Host "Obtém o nome no BD"
+        #Novo Nome
+        write-Host "Obtém o nome correto no BD"
         $bdConnect = ConnectBD
-        $newDescription = getDescriptionBD
+        $newNomePC = getNomeBD
         CloseBD $bdConnect                
     }catch{
-        write-warning "Erro ao verificar descricao"
-        $mensagem += "Erro ao verificar descricao"
+        write-warning "Erro ao verificar o nome"
+        $mensagem += "Erro ao verificar o nome"
         $mensagem += $_.Exception.Message
     }
     
-    if($description -notcontains $newDescription){
-        RenameDescriptionPC $mensagem $description $newDescription
+    if($nomePC -notcontains $newNomePC){ #Processo de verificação para saber se o PC já foi renomeado
+        RenameNamePC $mensagem $nomePC $newNomePC
     }else{
         write-warning "PC ja foi renomeado!"
     }
 }
 
-function RenameDescriptionPC($message, $description, $newDescription){    
+function RenameNamePC($message, $nomePC, $newNomePC){    
     try{                
         #Executa comando para renomear o PC
-        net config server /srvcomment:$newDescription                 
+        Rename-computer –computername $nomePC –newname $newNomePC #Renomear o nome do PC
         write-host "PC renomeado com sucesso!"
         $message += "Ok"
     }catch{
@@ -187,4 +179,4 @@ init
 
 write-host "Fazendo o Load do dll"
 [void][system.reflection.Assembly]::LoadFrom("C:\Drivers\Renomeacao_descricao\MySql.Data.dll")
-verificarDescricao
+verificarNome
