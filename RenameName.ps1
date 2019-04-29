@@ -1,11 +1,11 @@
-#latest version date: 25/04/19 - v0.1
+#latest version date: 29/04/19 - v0.2
 $dataHora = Get-Date -Format g
 
 function gerarLog($message){          
     $mensagem="Script executado em " +$dataHora + "`r`n`r`n"      
     $mensagem += "Status: "+$message+ "`r`n`r`n __________________________________`r`n`r`n"      
     
-	$mensagem >> C:\Drivers\Renomeacao_descricao\log_gpoRenameName.txt
+	$mensagem >> C:\Drivers\Renomeacao_nome\log_gpoRenameName.txt
 }
 
 function getNomePC(){
@@ -97,10 +97,13 @@ function sendResponse($message) {
 }
 
 function getNomeBD(){
-    $nomePC = getNomePC
-    $querySelect = "SELECT modelo, setor, sala FROM tb_pcs WHERE nome='$nomePC';"
-    $colsVal = SelectQuery $bdConnect $querySelect 3 #Array que contém os valores do modelo, setor e sala
-    return "$($colsVal[0]) - $($colsVal[1]) - $($colsVal[2])"
+    #$nomePC = getNomePC #Linha deve ser descomentada depois que o script tiver quase pronto.
+    $nomePC = "HP--59005679"
+    $querySelect = "SELECT nome_novo FROM tb_nomes WHERE nome='$nomePC';"
+    
+    $colVal = SelectQuery $bdConnect $querySelect 1 #Array que contém os valores do modelo, setor e sala
+    write-host "Coluna novo_nome: " "$($colVal[0])"
+    return "$($colVal[0])"
 }
 
 function verificarNome(){
@@ -115,18 +118,22 @@ function verificarNome(){
         write-Host "Obtém o nome correto no BD"
         $bdConnect = ConnectBD
         $newNomePC = getNomeBD
-        CloseBD $bdConnect                
+        CloseBD $bdConnect        
+
+        if($nomePC -notcontains $newNomePC){ #Processo de verificação para saber se o PC já foi renomeado
+            #RenameNamePC $mensagem $nomePC $newNomePC #Linha que chama a função para alterar o nome do PC
+            write-host "Alterando o nome do PC...."
+            write-host "Nome:" $nomePC;
+            write-host "Novo nome:" $newNomePC;
+        }else{
+            write-warning "PC ja foi renomeado!"
+        }        
+
     }catch{
         write-warning "Erro ao verificar o nome"
         $mensagem += "Erro ao verificar o nome"
         $mensagem += $_.Exception.Message
-    }
-    
-    if($nomePC -notcontains $newNomePC){ #Processo de verificação para saber se o PC já foi renomeado
-        RenameNamePC $mensagem $nomePC $newNomePC
-    }else{
-        write-warning "PC ja foi renomeado!"
-    }
+    }        
 }
 
 function RenameNamePC($message, $nomePC, $newNomePC){    
@@ -151,23 +158,23 @@ function RenameNamePC($message, $nomePC, $newNomePC){
 function init{
     $pathOrigin_dll = '\\paloma\Log_Script_Renomeacao\MySql.Data.dll'
     try{                        
-        if(!(test-path -path C:\Drivers\Renomeacao_descricao)){
+        if(!(test-path -path C:\Drivers\Renomeacao_nome)){
             write-host "CRIANDO pasta Renomeacao_descricao..."
-            New-Item -Path C:\Drivers\Renomeacao_descricao -ItemType directory   
+            New-Item -Path C:\Drivers\Renomeacao_nome -ItemType directory   
             write-host "pasta Renomeacao_descricao CRIADA!"
             
             write-host "COPIANDO arquivo dll..."
-            Copy-Item -Path $pathOrigin_DLL -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll' 
+            Copy-Item -Path $pathOrigin_DLL -Destination 'C:\Drivers\Renomeacao_nome\MySql.Data.dll' 
             write-host "arquivo Dll COPIADO!"
 
-        }elseif(!(Test-Path -path C:\Drivers\Renomeacao_descricao\MySql.Data.dll -PathType Leaf)){
+        }elseif(!(Test-Path -path C:\Drivers\Renomeacao_nome\MySql.Data.dll -PathType Leaf)){
             write-host "COPIANDO arquivo dll..."
-            Copy-Item -Path $pathOrigin_DLL -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll' 
+            Copy-Item -Path $pathOrigin_DLL -Destination 'C:\Drivers\Renomeacao_nome\MySql.Data.dll' 
             write-host "arquivo Dll COPIADO!"
         }else{
             write-warning "Pasta e dll já existem!"
         }	            
-#Copy-Item -Path '\\DESKTOP-V6HR2FI\Users\Programador Java\Desktop\Mapeamento - Estágio\PowerShell-GPO-Automacao\pasta_paloma\MySql.Data.dll' -Destination 'C:\Drivers\Renomeacao_descricao\MySql.Data.dll'
+
     }catch{                    
         $mensagem += $_.Exception.Message
         gerarLog $mensagem
@@ -178,5 +185,5 @@ function init{
 init
 
 write-host "Fazendo o Load do dll"
-[void][system.reflection.Assembly]::LoadFrom("C:\Drivers\Renomeacao_descricao\MySql.Data.dll")
+[void][system.reflection.Assembly]::LoadFrom("C:\Drivers\Renomeacao_nome\MySql.Data.dll")
 verificarNome
