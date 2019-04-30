@@ -1,4 +1,4 @@
-#latest version date: 29/04/19 - v0.2
+#latest version date: 30/04/19 - v0.3
 $dataHora = Get-Date -Format g
 
 function gerarLog($message){          
@@ -71,23 +71,22 @@ function InsertQuery($bdConnect, [string]$query) {
 function sendResponse($message) {        
     #$nomePC = "pc-desconhecido"
     $nomePC = getNomePC  
-    $description = getDescriptionPC    
 
     $bdConnect = ConnectBD
-    $querySelect = "SELECT nome FROM tb_response WHERE nome='$nomePC';"
+    $querySelect = "SELECT state FROM tb_nomes WHERE nome='$nomePC';"
     $colNome = SelectQuery $bdConnect $querySelect 1 #Array que contém os valores do modelo, setor e sala
     write-host $colNome[0]
 
     if($colNome[0] -ne $null){
         write-host "coluna não está vazia, preciso realizar o UPDATE"
-        $queryUpdate = "UPDATE tb_response SET descricao='$description', descRenomeada='$message', data_hora='$dataHora' WHERE nome='$nomePC';"         
+        $queryUpdate = "UPDATE tb_nomes SET state='$message' WHERE nome='$nomePC';"         
         write-host 'atualizando linha...'
         $bdConnect = ConnectBD
         InsertQuery $bdConnect $queryUpdate 
         CloseBD $bdConnect    
     }else{
         write-host "coluna está vazia, preciso realizar o INSERT INTO"
-        $queryInsert = "INSERT INTO tb_response (nome, descRenomeada, descricao, data_hora) VALUES ('$nomePC', '$message', '$description', '$dataHora');"         
+        $queryInsert = "INSERT INTO tb_nomes (state) VALUES ('$message');"         
         write-host 'inserindo linha...'
         $bdConnect = ConnectBD
         InsertQuery $bdConnect $queryInsert 
@@ -97,8 +96,8 @@ function sendResponse($message) {
 }
 
 function getNomeBD(){
-    #$nomePC = getNomePC #Linha deve ser descomentada depois que o script tiver quase pronto.
-    $nomePC = "HP--59005679"
+    $nomePC = getNomePC #Linha deve ser descomentada depois que o script tiver quase pronto.
+    #$nomePC = "HP--59005679"
     $querySelect = "SELECT nome_novo FROM tb_nomes WHERE nome='$nomePC';"
     
     $colVal = SelectQuery $bdConnect $querySelect 1 #Array que contém os valores do modelo, setor e sala
@@ -118,22 +117,21 @@ function verificarNome(){
         write-Host "Obtém o nome correto no BD"
         $bdConnect = ConnectBD
         $newNomePC = getNomeBD
-        CloseBD $bdConnect        
-
-        if($nomePC -notcontains $newNomePC){ #Processo de verificação para saber se o PC já foi renomeado
-            #RenameNamePC $mensagem $nomePC $newNomePC #Linha que chama a função para alterar o nome do PC
-            write-host "Alterando o nome do PC...."
-            write-host "Nome:" $nomePC;
-            write-host "Novo nome:" $newNomePC;
-        }else{
-            write-warning "PC ja foi renomeado!"
-        }        
-
+        CloseBD $bdConnect                  
     }catch{
         write-warning "Erro ao verificar o nome"
         $mensagem += "Erro ao verificar o nome"
         $mensagem += $_.Exception.Message
-    }        
+        gerarLog $message 
+    }     
+    if($nomePC -notcontains $newNomePC -and $newNomePC -notcontains "" ){ #Processo de verificação para saber se o PC já foi renomeado
+            RenameNamePC $mensagem $nomePC $newNomePC #Linha que chama a função para alterar o nome do PC
+            write-host "Alterando o nome do PC.."
+            write-host "Nome:" $nomePC -foreground Magenta
+            write-host "Novo nome:" $newNomePC -foreground Cyan
+    }else{
+        write-warning "PC ja foi renomeado!"
+    }         
 }
 
 function RenameNamePC($message, $nomePC, $newNomePC){    
@@ -147,19 +145,13 @@ function RenameNamePC($message, $nomePC, $newNomePC){
         $message += "Ocorreu um erro ao renomear!"
         $message += $_.Exception.Message        
     }
- 
-    write-Host "Nome do PC:" $nomePC
-    write-Host "Descrição do PC: " $description -foreground Magenta    
-    write-host "Descrição nova: " $newDescription -foreground Cyan
-    write-Host ""
-    
     sendResponse $message    
 }
 function init{
     $pathOrigin_dll = '\\paloma\Log_Script_Renomeacao\MySql.Data.dll'
     try{                        
         if(!(test-path -path C:\Drivers\Renomeacao_nome)){
-            write-host "CRIANDO pasta Renomeacao_descricao..."
+            write-host "CRIANDO pasta Renomeacao_nome..."
             New-Item -Path C:\Drivers\Renomeacao_nome -ItemType directory   
             write-host "pasta Renomeacao_descricao CRIADA!"
             
