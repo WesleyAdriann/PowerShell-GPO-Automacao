@@ -1,4 +1,4 @@
-#latest version date: 30/04/19 - v0.3
+#latest version date: 06/05/19 - v0.5
 $dataHora = Get-Date -Format g
 
 function gerarLog($message){          
@@ -134,10 +134,12 @@ function verificarNome(){
     }         
 }
 
-function RenameNamePC($message, $nomePC, $newNomePC){    
+function RenameNamePC($message, $newNomePC){    
     try{                
         #Executa comando para renomear o PC
-        Rename-computer –computername $nomePC –newname $newNomePC #Renomear o nome do PC
+        $computerName = Get-WmiObject Win32_ComputerSystem        
+        $computername.Rename($newNomePC) #Função que renomea o nome do PC
+
         write-host "PC renomeado com sucesso!"
         $message += "Ok"
     }catch{
